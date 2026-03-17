@@ -60,7 +60,7 @@ export default function Register() {
           Train. Recover. Evolve.
         </p>
 
-        <div className="w-10 h-[2px] bg-[#e63946] my-8" />
+        <div className="w-10 bg-[#e63946] my-8" />
 
         <ul className="space-y-3">
           {[
@@ -73,7 +73,7 @@ export default function Register() {
               key={item}
               className="flex items-center gap-3 text-[13px] text-[#777]"
             >
-              <span className="w-[6px] h-[6px] rounded-full bg-[#e63946]" />
+              <span className="rounded-full bg-[#e63946]" />
               {item}
             </li>
           ))}
