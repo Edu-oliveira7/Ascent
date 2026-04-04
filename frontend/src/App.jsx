@@ -1,12 +1,14 @@
 import React, { useState, useEffect, useRef } from "react";
 import { BrowserRouter as Router, Routes, Route, useLocation } from "react-router-dom";
 import './index.css';
+import { AuthProvider } from "./context/AuthContext";
 import Header from "./components/Header";
 import Footer from "./components/Footer";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
 import Dashboard from "./pages/Dashboard";
 import CreateWorkout from "./components/CreateWorkout";
+import PrivateRoute from "./routes/PrivateRoute";
 
 // Componente para revelar elementos ao scroll
 const Reveal = ({ children, delay = 0 }) => {
@@ -232,14 +234,16 @@ const MainLayout = () => (
 
 export default function App() {
   return (
+    <AuthProvider>
       <div className="bg-[#0a0a0a] text-[#f5f5f0] font-['Barlow'] selection:bg-[#ff301d] selection:text-white min-h-screen overflow-x-hidden">
         <Routes>
           <Route path="/" element={<MainLayout />} />
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
-          <Route path="/dashboard" element={<Dashboard />} />
-          <Route path="/create-workout" element={<CreateWorkout onCreated={() => {}} />} />
+          <Route path="/dashboard" element={<PrivateRoute><Dashboard /></PrivateRoute>} />
+          <Route path="/create-workout" element={<PrivateRoute><CreateWorkout /></PrivateRoute>} />
         </Routes>
       </div>
+    </AuthProvider>
   );
 }

@@ -52,3 +52,48 @@ class Exercise(models.Model):
 
     def __str__(self):
         return f"{self.name} - {self.sets} sets x {self.reps} reps"
+    
+class WorkoutLog(models.Model):
+    user = models.ForeignKey(
+        User, 
+        on_delete=models.CASCADE, 
+        related_name="workout_logs"
+    )
+    workout_protocol = models.ForeignKey(
+        Workout, 
+        on_delete=models.SET_NULL, 
+        null=True, 
+        blank=True
+    )
+    
+    date = models.DateTimeField(auto_now_add=True)
+    total_volume = models.FloatField(default=0.0) 
+    duration_minutes = models.IntegerField(null=True, blank=True)
+
+    class Meta:
+        ordering = ['-date'] # Mais recentes primeiro no Dashboard
+
+    def __str__(self):
+        return f"Sessão em {self.date.strftime('%d/%m/%Y')} - {self.user.username}"
+
+class ExerciseLog(models.Model):
+    workout_log = models.ForeignKey(
+        WorkoutLog, 
+        on_delete=models.CASCADE, 
+        related_name="exercise_logs"
+    )
+    # Referência ao exercício do protocolo
+    exercise_template = models.ForeignKey(
+        Exercise, 
+        on_delete=models.SET_NULL, 
+        null=True
+    )
+    
+    # Dados reais do dia 
+    name = models.CharField(max_length=100)
+    sets_completed = models.IntegerField()
+    reps_completed = models.IntegerField()
+    weight_used = models.FloatField()
+
+    def __str__(self):
+        return f"{self.name} - {self.weight_used}kg"

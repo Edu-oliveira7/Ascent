@@ -2,6 +2,16 @@ import React, { useEffect, useState } from "react";
 import { getWorkouts } from "../services/workout";
 import CreateWorkout from "../components/CreateWorkout";
 
+const dedupeWorkouts = (workouts) => {
+  const seen = new Set();
+  return workouts.filter((workout) => {
+    const key = `${String(workout.name || '').trim().toLowerCase()}:${String(workout.day || '').trim()}`;
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+};
+
 export default function Workouts() {
   const [workouts, setWorkouts] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -9,7 +19,7 @@ export default function Workouts() {
   async function loadWorkouts() {
     try {
       const data = await getWorkouts();
-      setWorkouts(Array.isArray(data) ? data : []);
+      setWorkouts(Array.isArray(data) ? dedupeWorkouts(data) : []);
     } catch (error) {
       console.error("Erro ao carregar treinos:", error);
     } finally {
