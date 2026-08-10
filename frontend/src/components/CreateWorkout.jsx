@@ -1,17 +1,36 @@
-import React, { useState, useContext } from "react";
+import React, { useState, useContext, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { AuthContext } from "../context/AuthContext";
+import { NotificationContext } from "../context/NotificationContext";
 import api from "../services/api"; 
 
-export default function CreateWorkout({ onCreated }) {
+export default function CreateWorkout({ onCreated, initialWorkout, onDeleted }) {
   const navigate = useNavigate();
-  const { token } = useContext(AuthContext);
+  const { notify } = useContext(NotificationContext);
 
   const [name, setName] = useState("");
   const [day, setDay] = useState("SEG");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [exercises, setExercises] = useState([{ name: "", sets: "", reps: "", weight: "" }]);
+  const [isEditing, setIsEditing] = useState(false);
+
+  useEffect(() => {
+    if (initialWorkout) {
+      setIsEditing(true);
+      setName(initialWorkout.name || "");
+      setDay(initialWorkout.day || "SEG");
+      setExercises(
+        (initialWorkout.exercises || []).map((ex) => ({
+          id: ex.id,
+          name: ex.name || "",
+          sets: ex.sets || "",
+          reps: ex.reps || "",
+          weight: ex.weight || "",
+        }))
+      );
+    }
+  }, [initialWorkout]);
 
   const addExercise = () => {
     setExercises([...exercises, { name: "", sets: "", reps: "", weight: "" }]);
@@ -38,6 +57,7 @@ export default function CreateWorkout({ onCreated }) {
       name,
       day,
       exercises: exercises.map((ex) => ({
+        id: ex.id,
         name: ex.name,
         sets: parseInt(ex.sets, 10) || 0,
         reps: parseInt(ex.reps, 10) || 0,
@@ -46,33 +66,60 @@ export default function CreateWorkout({ onCreated }) {
     };
 
     try {
-      await api.post("/workouts/", payload, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      if (isEditing && initialWorkout?.id) {
+        await api.put(`workouts/${initialWorkout.id}/`, payload);
+        notify("Protocolo atualizado com sucesso.", "success");
+      } else {
+        await api.post("workouts/", payload);
+        notify("Protocolo criado com sucesso.", "success");
+      }
+
       if (onCreated) {
         onCreated();
       } else {
         navigate("/dashboard");
       }
     } catch (err) {
-      setError("Falha ao salvar o protocolo. Verifique os campos.");
+      const message = err.response?.data?.detail || "Falha ao salvar o protocolo. Verifique os campos.";
+      setError(message);
+      notify(message, "error");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDelete = async () => {
+    if (!isEditing || !initialWorkout?.id) return;
+    if (!confirm("Deseja realmente excluir este protocolo?")) return;
+    setLoading(true);
+    try {
+      await api.delete(`workouts/${initialWorkout.id}/`);
+      notify("Protocolo excluído com sucesso.", "success");
+      if (onDeleted) onDeleted();
+      else navigate("/dashboard");
+    } catch (err) {
+      const message = err.response?.data?.detail || "Falha ao deletar o protocolo.";
+      setError(message);
+      notify(message, "error");
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen bg-[#0a0a0a] text-white font-['Barlow'] pt-24 pb-20 px-6">
+    <div className="min-h-screen bg-[#0a0a0a] text-white font-['Barlow'] pt-20 pb-12 px-4 sm:px-6 md:px-8">
       <div className="max-w-4xl mx-auto">
         
         <div className="mb-12">
           <button onClick={() => navigate("/dashboard")} className="text-[#555] hover:text-[#ff301d] transition-colors text-xs uppercase tracking-[0.3em] mb-6 flex items-center gap-2">
             ← Voltar ao Painel
           </button>
-          <h1 className="font-['Bebas_Neue'] text-6xl tracking-tight leading-none">
-            Novo <span className="text-[#ff301d]">Protocolo</span>
+          <h1 className="font-['Bebas_Neue'] text-4xl md:text-6xl tracking-tight leading-none">
+            {isEditing ? 'Editar' : 'Novo'} <span className="text-[#ff301d]">Protocolo</span>
           </h1>
-          <p className="text-[#666] mt-3 text-lg font-light">Estrutura base do treinamento.</p>
+          <p className="text-[#666] mt-3 text-lg font-light">
+            {isEditing ? 'Ajuste as séries e cargas do treino.' : 'Estrutura base do treinamento.'}
+          </p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-10">
@@ -187,14 +234,25 @@ export default function CreateWorkout({ onCreated }) {
 
           {error && <div className="bg-[#ff301d]/10 border border-[#ff301d]/20 text-[#ff301d] p-5 rounded-xl text-sm text-center">{error}</div>}
 
-          <div className="pt-10">
+          <div className="pt-10 grid gap-4">
             <button
               type="submit"
               disabled={loading}
               className="w-full bg-[#ff301d] py-6 rounded-2xl text-white font-black uppercase tracking-[0.4em] text-sm hover:bg-[#d4281a] transition-all shadow-lg"
             >
-              {loading ? "Sincronizando..." : "Finalizar Protocolo"}
+              {loading ? "Sincronizando..." : isEditing ? "Salvar Alterações" : "Finalizar Protocolo"}
             </button>
+
+            {isEditing && (
+              <button
+                type="button"
+                onClick={handleDelete}
+                disabled={loading}
+                className="w-full bg-red-600/10 border border-red-600/20 text-red-500 py-4 rounded-2xl font-bold"
+              >
+                Excluir Protocolo
+              </button>
+            )}
           </div>
         </form>
       </div>

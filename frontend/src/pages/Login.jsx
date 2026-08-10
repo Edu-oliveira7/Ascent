@@ -1,6 +1,6 @@
 import { useState, useContext } from "react"; 
 import { useNavigate } from "react-router-dom";
-import { loginUser } from "../services/auth";
+import { loginUser, getCurrentUser } from "../services/auth";
 import { AuthContext } from "../context/AuthContext"; 
 
 export default function Login() {
@@ -19,14 +19,12 @@ export default function Login() {
     
     try {
       const data = await loginUser(username, password);
-      
-      const userData = { username: username }; 
-      login(data.access, userData); 
-      
       localStorage.setItem("refresh", data.refresh);
+      const currentUser = await getCurrentUser();
+      login(data.access, currentUser);
       
       navigate("/dashboard");
-    } catch (err) {
+    } catch {
       setError("Usuário ou senha inválidos.");
     } finally {
       setLoading(false);

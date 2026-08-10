@@ -1,13 +1,20 @@
 import React, { useState, useEffect, useRef } from "react";
-import { BrowserRouter as Router, Routes, Route, useLocation } from "react-router-dom";
+import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import './index.css';
 import { AuthProvider } from "./context/AuthContext";
+import { NotificationProvider } from "./context/NotificationContext";
 import Header from "./components/Header";
 import Footer from "./components/Footer";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
 import Dashboard from "./pages/Dashboard";
+import ExecuteWorkout from "./pages/ExecuteWorkout";
 import CreateWorkout from "./components/CreateWorkout";
+import EditWorkout from "./pages/EditWorkout";
+import Evolution from "./pages/Evolution";
+import History from "./pages/History";
+import MeusTreinos from "./pages/MeusTreinos";
+import Workouts from "./pages/Workouts";
 import PrivateRoute from "./routes/PrivateRoute";
 
 // Componente para revelar elementos ao scroll
@@ -37,18 +44,29 @@ const Reveal = ({ children, delay = 0 }) => {
 
 // Componente de partículas para efeito de iluminação
 const Particles = () => {
+  const [particles] = useState(() =>
+    Array.from({ length: 15 }, (_, i) => ({
+      id: i,
+      top: `${(i * 37 + 11) % 100}%`,
+      left: `${(i * 29 + 17) % 100}%`,
+      animationDelay: `${(i % 5) * 0.5}s`,
+      animationDuration: `${3 + (i % 4)}s`,
+      opacity: 0.1 + (i % 4) * 0.05,
+    }))
+  );
+
   return (
     <div className="absolute inset-0 overflow-hidden pointer-events-none">
-      {[...Array(15)].map((_, i) => (
+      {particles.map((particle) => (
         <div
-          key={i}
+          key={particle.id}
           className="absolute w-1 h-1 bg-[#ff301d] rounded-full animate-float"
           style={{
-            top: `${Math.random() * 100}%`,
-            left: `${Math.random() * 100}%`,
-            animationDelay: `${Math.random() * 5}s`,
-            animationDuration: `${3 + Math.random() * 4}s`,
-            opacity: 0.1 + Math.random() * 0.2
+            top: particle.top,
+            left: particle.left,
+            animationDelay: particle.animationDelay,
+            animationDuration: particle.animationDuration,
+            opacity: particle.opacity,
           }}
         />
       ))}
@@ -118,27 +136,24 @@ const MainLayout = () => (
           </Reveal>
         </div>
       </section>
-
-      {/* ── A PLATAFORMA ── */}
-      <section id="features" className="py-32 px-8 md:px-20 bg-[#0a0a0a] relative overflow-hidden border-t border-white/5">
+      {/* ── COMO FUNCIONA ── */}
+      <section id="como-funciona" className="py-32 px-8 md:px-20 bg-[#0a0a0a] relative overflow-hidden border-t border-white/5">
         <div className="max-w-[1280px] mx-auto relative z-10">
           <Reveal>
-            <div className="mb-16 flex flex-col md:flex-row md:items-end justify-between gap-8">
-              <div className="max-w-xl">
-                <span className="font-['Barlow'] text-[#ff301d] tracking-[0.2em] font-semibold uppercase text-sm">Módulos Funcionais</span>
-                <h2 className="font-['Bebas_Neue'] text-[clamp(3.5rem,7vw,5.5rem)] mt-2 leading-none text-white">O Motor.</h2>
-              </div>
-              <div className="text-[#666] font-['Barlow'] text-[0.95rem] md:text-right leading-relaxed max-w-xs">
-                Engenharia focada em resultado real e escalabilidade de performance.
-              </div>
+            <div className="mb-16 text-center max-w-2xl mx-auto">
+              <span className="font-['Barlow'] text-[#ff301d] tracking-[0.2em] font-semibold uppercase text-sm">O Processo</span>
+              <h2 className="font-['Bebas_Neue'] text-[clamp(3.5rem,7vw,5.5rem)] mt-2 leading-none text-white">Como Funciona.</h2>
+              <p className="text-[#777] font-light text-[1.05rem] mt-6 leading-relaxed">
+                Quatro etapas simples que transformam esforço bruto em progresso mensurável.
+              </p>
             </div>
           </Reveal>
           <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
             {[
-              { t: "Cargas Inteligentes", d: "Algoritmo que sugere progressões baseadas no seu volume histórico." },
-              { t: "Biometria Integrada", d: "Sincronização de dados corporais para análise de composição." },
-              { t: "Readiness Score", d: "Cálculo de prontidão baseado no sono e esforço acumulado." },
-              { t: "Dashboard PRO", d: "Métricas detalhadas e escalabilidade para gestão de performance." }
+              { t: "Registre seu treino", d: "Insira cargas, séries e repetições em segundos — sem fricção, direto do seu celular." },
+              { t: "Calculamos seu Readiness", d: "Cruzamos sono, fadiga acumulada e histórico para saber se hoje é dia de empurrar ou recuperar." },
+              { t: "Receba a progressão", d: "O algoritmo sugere a próxima carga ideal, eliminando o achismo da sua planilha." },
+              { t: "Acompanhe sua evolução", d: "Visualize sua curva de força e composição corporal ao longo do tempo no Dashboard." }
             ].map((f, i) => (
               <div key={i} className="bg-[#111] border border-white/5 rounded-xl p-8 hover:bg-[#161616] hover:border-white/10 transition-all group relative overflow-hidden">
                 <div className="w-12 h-12 bg-[#1a1a1a] rounded-lg group-hover:bg-[#ff301d]/10 flex items-center justify-center mb-6 transition-colors duration-300">
@@ -235,15 +250,23 @@ const MainLayout = () => (
 export default function App() {
   return (
     <AuthProvider>
-      <div className="bg-[#0a0a0a] text-[#f5f5f0] font-['Barlow'] selection:bg-[#ff301d] selection:text-white min-h-screen overflow-x-hidden">
-        <Routes>
-          <Route path="/" element={<MainLayout />} />
-          <Route path="/login" element={<Login />} />
-          <Route path="/register" element={<Register />} />
-          <Route path="/dashboard" element={<PrivateRoute><Dashboard /></PrivateRoute>} />
-          <Route path="/create-workout" element={<PrivateRoute><CreateWorkout /></PrivateRoute>} />
-        </Routes>
-      </div>
+      <NotificationProvider>
+        <div className="bg-[#0a0a0a] text-[#f5f5f0] font-['Barlow'] selection:bg-[#ff301d] selection:text-white min-h-screen overflow-x-hidden">
+          <Routes>
+            <Route path="/" element={<MainLayout />} />
+            <Route path="/login" element={<Login />} />
+            <Route path="/register" element={<Register />} />
+            <Route path="/dashboard" element={<PrivateRoute><Dashboard /></PrivateRoute>} />
+            <Route path="/create-workout" element={<PrivateRoute><CreateWorkout /></PrivateRoute>} />
+            <Route path="/execute-workout" element={<PrivateRoute><ExecuteWorkout /></PrivateRoute>} />
+            <Route path="/edit-workout/:id" element={<PrivateRoute><EditWorkout /></PrivateRoute>} />
+            <Route path="/workouts" element={<PrivateRoute><Workouts /></PrivateRoute>} />
+            <Route path="/evolution" element={<PrivateRoute><Evolution /></PrivateRoute>} />
+            <Route path="/history" element={<PrivateRoute><History /></PrivateRoute>} />
+            <Route path="/meus-treinos" element={<PrivateRoute><MeusTreinos /></PrivateRoute>} />
+          </Routes>
+        </div>
+      </NotificationProvider>
     </AuthProvider>
   );
 }

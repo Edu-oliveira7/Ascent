@@ -1,12 +1,13 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useContext } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
+import { AuthContext } from "../context/AuthContext";
 
 const NAV_LINKS = [
   { label: "O Desafio", href: "#problema" },
-  { label: "Solução", href: "#features" },
+  { label: "Solução", href: "#como-funciona" },
   { label: "Filosofia", href: "#resultados" },
 ];
-
+const HIDDEN_HEADER_ROUTES = ["/login", "/register"];
 export default function Header() {
   const [scrolled, setScrolled] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
@@ -19,8 +20,9 @@ export default function Header() {
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
-  // Não renderiza nada na página de login
-  if (location.pathname === "/login") return null;
+  const auth = useContext(AuthContext);
+
+  if (HIDDEN_HEADER_ROUTES.includes(location.pathname)) return null;
 
   const scrollTo = (e, href) => {
     e.preventDefault();
@@ -63,33 +65,60 @@ export default function Header() {
           {/* Nav Desktop */}
           <nav className="hidden lg:flex absolute left-1/2 -translate-x-1/2">
             <div className="flex gap-1 bg-white/[0.03] p-1.5 rounded-full border border-white/[0.06] backdrop-blur-md">
-              {NAV_LINKS.map(({ label, href }) => (
-                <a
-                  key={href}
-                  href={href}
-                  onClick={(e) => scrollTo(e, href)}
-                  className="font-['Barlow'] text-[0.75rem] tracking-[0.15em] uppercase px-5 py-2 rounded-full transition-all duration-300 no-underline text-[#888] hover:text-white hover:bg-white/5"
-                >
-                  {label}
-                </a>
-              ))}
+              {auth && auth.token ? (
+                [
+                  { label: 'Dashboard', to: '/dashboard' },
+                  { label: 'Workouts', to: '/workouts' },
+                  { label: 'Evolução', to: '/evolution' },
+                  { label: 'Histórico', to: '/history' },
+                  { label: 'Meus Treinos', to: '/meus-treinos' },
+                ].map(({ label, to }) => (
+                  <button
+                    key={to}
+                    onClick={() => navigate(to)}
+                    className="font-['Barlow'] text-[0.75rem] tracking-[0.15em] uppercase px-5 py-2 rounded-full transition-all duration-300 no-underline text-[#888] hover:text-white hover:bg-white/5"
+                  >
+                    {label}
+                  </button>
+                ))
+              ) : (
+                NAV_LINKS.map(({ label, href }) => (
+                  <a
+                    key={href}
+                    href={href}
+                    onClick={(e) => scrollTo(e, href)}
+                    className="font-['Barlow'] text-[0.75rem] tracking-[0.15em] uppercase px-5 py-2 rounded-full transition-all duration-300 no-underline text-[#888] hover:text-white hover:bg-white/5"
+                  >
+                    {label}
+                  </a>
+                ))
+              )}
             </div>
           </nav>
 
           <div className="flex items-center gap-6">
 
-            {/* BOTÃO ACESSAR → LOGIN */}
-            <button
-              onClick={() => navigate("/login")}
-              className="hidden md:block font-['Barlow'] text-[0.7rem] font-bold tracking-[0.2em] uppercase text-white border border-white/20 px-6 py-2.5 hover:border-[#ff301d] hover:bg-[#ff301d]/10 transition-all duration-300"
-            >
-              Acessar
-            </button>
+            {/* Auth actions */}
+            {auth && auth.token ? (
+              <div className="hidden md:flex items-center gap-4">
+                <div className="text-sm text-white/80">{auth.user?.username || 'Usuário'}</div>
+                <button onClick={() => { auth.logout(); navigate('/login'); }} className="font-['Barlow'] text-[0.7rem] font-bold tracking-[0.2em] uppercase text-white border border-white/20 px-4 py-2 hover:border-[#ff301d] hover:bg-[#ff301d]/10 transition-all duration-300">Sair</button>
+              </div>
+            ) : (
+              <button
+                onClick={() => navigate("/login")}
+                className="hidden md:block font-['Barlow'] text-[0.7rem] font-bold tracking-[0.2em] uppercase text-white border border-white/20 px-6 py-2.5 hover:border-[#ff301d] hover:bg-[#ff301d]/10 transition-all duration-300"
+              >
+                Acessar
+              </button>
+            )}
 
             {/* Mobile */}
             <button
               className="lg:hidden flex flex-col gap-1.5 p-2"
-              onClick={() => setMenuOpen(!menuOpen)}
+              onClick={() => setMenuOpen((prev) => !prev)}
+              aria-expanded={menuOpen}
+              aria-label="Abrir menu"
             >
               <span className={`w-6 h-[1px] bg-white transition-transform ${menuOpen ? "rotate-45 translate-y-[7px]" : ""}`} />
               <span className={`w-6 h-[1px] bg-white transition-opacity ${menuOpen ? "opacity-0" : ""}`} />
@@ -99,22 +128,77 @@ export default function Header() {
         </div>
       </header>
 
-      {/* Mobile Drawer */}
       <div
-        className={`fixed inset-0 z-[900] bg-[#0a0a0a] flex flex-col items-center justify-center gap-10 transition-transform duration-700 ease-[cubic-bezier(0.77,0,0.175,1)] ${
+        className={`fixed inset-0 z-[850] bg-black/40 transition-opacity duration-300 ${
+          menuOpen ? "opacity-100 visible" : "opacity-0 invisible"
+        }`}
+        onClick={() => setMenuOpen(false)}
+      />
+
+      {/* Mobile Compact Panel */}
+      <div
+        className={`fixed top-0 right-0 z-[900] h-full max-w-[85vw] w-full sm:max-w-[26rem] bg-[#070707ee] backdrop-blur-sm border-l border-white/5 transform transition-transform duration-300 ${
           menuOpen ? "translate-x-0" : "translate-x-full"
         }`}
       >
-        {NAV_LINKS.map(({ label, href }) => (
-          <a
-            key={href}
-            href={href}
-            onClick={(e) => scrollTo(e, href)}
-            className="font-['Bebas_Neue'] text-5xl text-white hover:text-[#ff301d] transition-colors"
+        <div className="flex items-center justify-between p-4 border-b border-white/5">
+          <div className="text-white font-semibold">Menu</div>
+          <button
+            onClick={() => setMenuOpen(false)}
+            className="text-white/60 hover:text-white"
+            aria-label="Fechar menu"
           >
-            {label}
-          </a>
-        ))}
+            Fechar
+          </button>
+        </div>
+
+        <div className="p-4 space-y-3">
+          {auth && auth.token ? (
+            [
+              { label: 'Dashboard', to: '/dashboard' },
+              { label: 'Workouts', to: '/workouts' },
+              { label: 'Evolução', to: '/evolution' },
+              { label: 'Histórico', to: '/history' },
+              { label: 'Meus Treinos', to: '/meus-treinos' },
+            ].map(({ label, to }) => (
+              <button
+                key={to}
+                onClick={() => {
+                  setMenuOpen(false);
+                  navigate(to);
+                }}
+                className="w-full text-left px-3 py-2 rounded-md text-white/90 hover:bg-white/5 transition-colors"
+              >
+                {label}
+              </button>
+            ))
+          ) : (
+            NAV_LINKS.map(({ label, href }) => (
+              <a
+                key={href}
+                href={href}
+                onClick={(e) => {
+                  setMenuOpen(false);
+                  scrollTo(e, href);
+                }}
+                className="block px-3 py-2 rounded-md text-white/90 hover:bg-white/5"
+              >
+                {label}
+              </a>
+            ))
+          )}
+
+          {!auth?.token && (
+            <button onClick={() => { setMenuOpen(false); navigate('/login'); }} className="w-full mt-4 bg-[#ff301d] text-white px-3 py-2 rounded-md">Acessar</button>
+          )}
+
+          {auth?.token && (
+            <div className="mt-4 border-t border-white/5 pt-3">
+              <div className="text-sm text-white/80 mb-2">{auth.user?.username || 'Usuário'}</div>
+              <button onClick={() => { auth.logout(); setMenuOpen(false); navigate('/login'); }} className="w-full text-left px-3 py-2 rounded-md text-white/90 hover:bg-white/5">Sair</button>
+            </div>
+          )}
+        </div>
       </div>
     </>
   );

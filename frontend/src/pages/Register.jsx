@@ -33,7 +33,13 @@ export default function Register() {
     setLoading(true);
 
     try {
-      await registerUser(form.username, form.password, form.email);
+      await registerUser(
+        form.username,
+        form.password,
+        form.email,
+        form.firstName,
+        form.lastName
+      );
       navigate("/login");
     } catch (err) {
       const msg = err?.response?.data?.error || "Erro ao criar conta.";

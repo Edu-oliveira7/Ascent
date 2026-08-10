@@ -1,6 +1,6 @@
 const FOOTER_LINKS = {
   Produto: [
-    { label: "Como funciona", href: "#features" },
+    { label: "Como funciona", href: "#como-funciona" },
     { label: "Resultados", href: "#resultados" },
     { label: "Sobre", href: "#sobre" },
   ],
