@@ -1,45 +1,59 @@
-# 🏔️ Ascent
+# Ascent
 
-**Ascent** é uma plataforma de gestão de rotina e performance física, projetada como um "sistema operacional pessoal" para atletas que buscam foco, disciplina e alta performance através do rastreamento de dados.
+> Plataforma para acompanhamento de treinos e evolução física.
 
-## 🚀 Tecnologias
+O **Ascent** é uma aplicação web desenvolvida para centralizar o acompanhamento da rotina de treinamento. A proposta é transformar os dados dos treinos em informações úteis para acompanhar consistência, evolução e desempenho ao longo do tempo.
 
-- **Backend:** Python 3.11+, Django 5.x, Django REST Framework
-- **Frontend:** React 19, Vite, Tailwind CSS, Lucide React
-- **Autenticação:** JWT (JSON Web Token) com sistema de Refresh Token
-- **Banco de Dados:** SQLite (Desenvolvimento)
+O projeto está sendo desenvolvido com uma arquitetura separando frontend e backend, utilizando uma API REST para comunicação entre as aplicações.
 
-## 🏗️ Estrutura do Projeto
+---
 
-```bash
-Ascent/
-├── backend/       # Core da API e Regras de Negócio (Django)
-├── frontend/      # Interface do Usuário (React + Vite)
-└── README.md      # Documentação Geral
-```
-
-
-## 🛠️ Como Executar
+## Stack
 
 ### Backend
-1. Entre no diretório: `cd backend`
-2. Crie um ambiente virtual: `python -m venv venv`
-3. Ative o ambiente: `venv\Scripts\activate` (Windows) ou `source venv/bin/activate` (Linux/Mac)
-4. Instale as dependências: `pip install -r requirements.txt`
-5. Configure as variáveis de ambiente em um arquivo `.env` local.
-6. Execute as migrações: `python manage.py migrate`
-7. Inicie o servidor: `python manage.py runserver`
+
+- Python 3.11+
+- Django 5.x
+- Django REST Framework
+- Simple JWT
+- SQLite
 
 ### Frontend
-1. Entre no diretório: `cd frontend`
-2. Instale as dependências: `npm install`
-3. Inicie o servidor de desenvolvimento: `npm run dev`
 
-## 📈 Funcionalidades
+- React 19
+- Vite
+- Tailwind CSS
+- Lucide React
 
-- [x] **Gestão de Protocolos:** Criação e edição de treinos personalizados.
-- [x] **Registro de Sessões:** Log detalhado de execução com cálculo de volume (kg).
-- [x] **Dashboard de Performance:** Métricas de consistência semanal e Recordes Pessoais (PR).
-- [x] **Segurança:** Autenticação robusta e proteção de rotas.
+### Autenticação
 
+- JWT
+- Access Token
+- Refresh Token
+- Proteção de endpoints
+- Controle de acesso por usuário
 
+---
+
+## Estrutura
+
+```text
+Ascent/
+├── backend/
+│   ├── apps/
+│   │   ├── users/
+│   │   ├── workouts/
+│   │   └── recovery/
+│   ├── config/
+│   └── manage.py
+│
+├── frontend/
+│   ├── src/
+│   │   ├── components/
+│   │   ├── context/
+│   │   ├── pages/
+│   │   ├── routes/
+│   │   └── services/
+│   └── package.json
+│
+└── README.md
