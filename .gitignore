@@ -5,5 +5,14 @@ backend/venv/
 db.sqlite3
 *.sqlite3
 .env
+.env.*
 node_modules/
+dist/
+build/
 .vscode/
+.idea/
+.vscode/
+*.log
+.pytest_cache/
+coverage/
+htmlcov/
