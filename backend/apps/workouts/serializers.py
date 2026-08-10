@@ -7,6 +7,28 @@ class ExerciseSerializer(serializers.ModelSerializer):
         model = Exercise
         fields = ['id', 'name', 'sets', 'reps', 'weight']
 
+    def validate_name(self, value):
+        if not value or not value.strip():
+            raise serializers.ValidationError("O nome do exercício é obrigatório.")
+        return value.strip()
+
+    def validate_sets(self, value):
+        if value is None or value <= 0:
+            raise serializers.ValidationError("O número de séries deve ser maior que zero.")
+        return value
+
+    def validate_reps(self, value):
+        if value is None or value <= 0:
+            raise serializers.ValidationError("O número de repetições deve ser maior que zero.")
+        return value
+
+    def validate_weight(self, value):
+        if value is None:
+            return 0.0
+        if value < 0:
+            raise serializers.ValidationError("O peso não pode ser negativo.")
+        return value
+
 class WorkoutSerializer(serializers.ModelSerializer):
     exercises = ExerciseSerializer(many=True, required=False)
     day_display = serializers.CharField(source='get_day_display', read_only=True)
@@ -20,6 +42,11 @@ class WorkoutSerializer(serializers.ModelSerializer):
         user = getattr(request, 'user', None)
         name = attrs.get('name')
         day = attrs.get('day')
+
+        if not name or not name.strip():
+            raise serializers.ValidationError({ 'name': 'O nome do treino é obrigatório.' })
+        if not day:
+            raise serializers.ValidationError({ 'day': 'O dia do treino é obrigatório.' })
 
         if user and name and day:
             existing = Workout.objects.filter(user=user, name=name, day=day)
@@ -39,6 +66,40 @@ class WorkoutSerializer(serializers.ModelSerializer):
             Exercise.objects.create(workout=workout, **exercise_data)
         return workout
     
+    def update(self, instance, validated_data):
+        # Atualiza campos simples do treino
+        exercises_data = validated_data.pop('exercises', None)
+
+        for attr, value in validated_data.items():
+            setattr(instance, attr, value)
+        instance.save()
+
+        if exercises_data is not None:
+            # Map existing exercises by id
+            existing = {e.id: e for e in instance.exercises.all()}
+            sent_ids = []
+
+            for ex in exercises_data:
+                ex_id = ex.get('id', None)
+                if ex_id and ex_id in existing:
+                    # update
+                    obj = existing[ex_id]
+                    obj.name = ex.get('name', obj.name)
+                    obj.sets = ex.get('sets', obj.sets)
+                    obj.reps = ex.get('reps', obj.reps)
+                    obj.weight = ex.get('weight', obj.weight)
+                    obj.save()
+                    sent_ids.append(ex_id)
+                else:
+                    # create new
+                    Exercise.objects.create(workout=instance, **ex)
+
+            # delete removed exercises
+            for ex_id, ex_obj in existing.items():
+                if ex_id not in sent_ids:
+                    ex_obj.delete()
+
+        return instance
 class ExerciseLogSerializer(serializers.ModelSerializer):
     class Meta:
         model = ExerciseLog
@@ -72,4 +133,28 @@ class WorkoutLogSerializer(serializers.ModelSerializer):
             ExerciseLog.objects.create(workout_log=workout_log, **log_data)
             
         return workout_log
+
+    def update(self, instance, validated_data):
+        exercise_logs_data = validated_data.pop('exercise_logs', None)
+
+        # Atualiza campos básicos (data, duração, etc)
+        for attr, value in validated_data.items():
+            setattr(instance, attr, value)
+
+        if exercise_logs_data is not None:
+            instance.exercise_logs.all().delete()
+            
+            volume_calculado = 0
+            for log_data in exercise_logs_data:
+                ExerciseLog.objects.create(workout_log=instance, **log_data)
+                volume_calculado += (
+                    log_data.get('weight_used', 0) * 
+                    log_data.get('reps_completed', 0) * 
+                    log_data.get('sets_completed', 0)
+                )
+            
+            instance.total_volume = volume_calculado
+
+        instance.save()
+        return instance
     

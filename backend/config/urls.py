@@ -11,4 +11,5 @@ urlpatterns = [
     path("api/token/", TokenObtainPairView.as_view()),
     path("api/token/refresh/", TokenRefreshView.as_view()),
     path("api/workouts/", include("apps.workouts.urls")),
+    path("api/recovery/", include("apps.recovery.urls")),
 ]
